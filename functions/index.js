@@ -18,6 +18,9 @@ const T = new Twit({
   access_token_secret: functions.config().twitter.access_token_secret
 });
 
+// Retweet interjections
+const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"]
+
 exports.scheduledFunction = functions.pubsub
   .schedule("every 15 minutes")
   .onRun(context =>
@@ -34,12 +37,12 @@ exports.scheduledFunction = functions.pubsub
       .then(({ data: { statuses } }) =>
         Promise.all([statuses, statuses.length && ref.set(statuses[0].id_str)])
       )
-      .then(([statuses, resResponse]) =>
+      .then(([statuses]) =>
         statuses.forEach(({ id_str, user }) =>
           T.post("statuses/update", {
-            status: `Uh oh! @${user.screen_name} misspelled Tucson: https://twitter.com/${user.screen_name}/status/${id_str}`
+            status: `${interjections[Math.floor(Math.random() * interjections.length)]} @${user.screen_name} misspelled Tucson: https://twitter.com/${user.screen_name}/status/${id_str}`
           })
         )
       )
-      .catch(err => functions.logger.error(err.stack))
+      .catch(err => functions.logger.error(err))
   );
