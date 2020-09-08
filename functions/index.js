@@ -19,7 +19,7 @@ const T = new Twit({
 });
 
 exports.scheduledFunction = functions.pubsub
-  .schedule("every 1 hours")
+  .schedule("every 15 minutes")
   .onRun(context =>
     ref
       .once("value")
@@ -31,17 +31,13 @@ exports.scheduledFunction = functions.pubsub
           since_id
         })
       )
-      .then(result => {
-        if (result.length) {
-          ref.set(result[0].id_str);
-        }
-
-        return result;
-      })
-      .then(result =>
-        result.forEach(status =>
+      .then(({ data: { statuses } }) =>
+        Promise.all([statuses, statuses.length && ref.set(statuses[0].id_str)])
+      )
+      .then(([statuses, resResponse]) =>
+        statuses.forEach(({ id_str, user }) =>
           T.post("statuses/update", {
-            status: `Uh oh! @${status.user.screen_name} misspelled Tucson: https://twitter.com/${status.user.screen_name}/status/${status.id_str}`
+            status: `Uh oh! @${user.screen_name} misspelled Tucson: https://twitter.com/${user.screen_name}/status/${id_str}`
           })
         )
       )
