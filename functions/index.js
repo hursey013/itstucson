@@ -18,12 +18,13 @@ const T = new Twit({
   access_token_secret: functions.config().twitter.access_token_secret
 });
 
-// Config
+// General config
 const keyword = {
   correct: "Tucson",
-  incorrect: "Tuscon"
+  incorrect: "Tuscon",
+  ignore: ["hyundai"]
 };
-const q = `${keyword.incorrect.toLowerCase()} -hyundai lang:en -filter:replies -filter:retweets filter:safe`;
+const query = "lang:en -filter:replies -filter:retweets filter:safe";
 const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"];
 
 exports.scheduledFunction = functions.pubsub
@@ -32,29 +33,24 @@ exports.scheduledFunction = functions.pubsub
     ref
       .once("value")
       .then(snapshot => snapshot.val())
-      .then(since_id =>
-        T.get("search/tweets", {
-          q,
+      .then(since_id => {
+        const { incorrect, ignore } = keyword;
+        return T.get("search/tweets", {
+          q: `${incorrect} ${ignore.map(i => `-${i}`).join(" ")} ${query}`,
           result_type: "recent",
           since_id
-        })
-      )
+        });
+      })
       .then(({ data: { statuses } }) =>
-        statuses.filter(
-          status =>
-            !status.user.name
-              .toLowerCase()
-              .includes(keyword.incorrect.toLowerCase()) &&
-            !status.user.screen_name
-              .toLowerCase()
-              .includes(keyword.incorrect.toLowerCase())
+        statuses.filter(status =>
+          status.text.toLowerCase().includes(keyword.incorrect.toLowerCase())
         )
       )
       .then(statuses =>
         Promise.all([statuses, statuses.length && ref.set(statuses[0].id_str)])
       )
       .then(([statuses]) =>
-        statuses.forEach(({ id_str, user }) =>
+        statuses.map(({ id_str, user }) =>
           T.post("statuses/update", {
             status: `${
               interjections[Math.floor(Math.random() * interjections.length)]
