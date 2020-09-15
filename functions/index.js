@@ -41,11 +41,12 @@ exports.scheduledFunction = functions.pubsub
           since_id
         });
       })
-      .then(({ data: { statuses } }) =>
-        statuses.filter(status =>
+      .then(({ data: { statuses } }) => {
+        statuses.length && functions.logger.info(statuses);
+        return statuses.filter(status =>
           status.text.toLowerCase().includes(keyword.incorrect.toLowerCase())
-        )
-      )
+        );
+      })
       .then(statuses =>
         Promise.all([statuses, statuses.length && ref.set(statuses[0].id_str)])
       )
@@ -60,5 +61,6 @@ exports.scheduledFunction = functions.pubsub
           })
         )
       )
+      .then(statuses => statuses.length && functions.logger.info(statuses))
       .catch(err => functions.logger.error(err))
   );
