@@ -31,8 +31,12 @@ exports.scheduledFunction = functions.pubsub
   .onRun(context =>
     ref
       .once("value")
-      .then(snapshot => snapshot.val())
+      .then(snapshot =>
+        // Retrieve since_id and array of ignored keywords from db
+        snapshot.val()
+      )
       .then(({ ignore, since_id }) =>
+        // Fetch recent tweets matching query after since_id
         T.get("search/tweets", {
           q: `${keyword.incorrect} ${ignore
             .map(i => `-${i}`)
@@ -41,29 +45,36 @@ exports.scheduledFunction = functions.pubsub
           since_id
         })
       )
-      .then(({ data: { statuses } }) => {
-        const filtered = statuses.filter(status =>
-          status.text.toLowerCase().includes(keyword.incorrect.toLowerCase())
-        );
-        filtered.length && functions.logger.info(filtered);
-        return filtered;
-      })
-      .then(filtered =>
-        Promise.all([
-          statuses,
-          statuses.length && ref.child("since_id").set(statuses[0].id_str)
-        ])
+      .then(({ data: { statuses } }) =>
+        // Filter tweets not containing keyword in status.text and reverse order
+        statuses
+          .filter(status =>
+            status.text.toLowerCase().includes(keyword.incorrect.toLowerCase())
+          )
+          .reverse()
       )
-      .then(([statuses]) =>
-        statuses.map(({ id_str, user }) =>
-          T.post("statuses/update", {
-            status: `${
-              interjections[Math.floor(Math.random() * interjections.length)]
-            } @${user.screen_name} misspelled ${
-              keyword.correct
-            }: https://twitter.com/${user.screen_name}/status/${id_str}`
-          })
-        )
+      .then(
+        filtered =>
+          filtered.length &&
+          Promise.all(
+            filtered.map(({ id_str, user }) =>
+              // Post new tweet
+              T.post("statuses/update", {
+                status: `${
+                  interjections[
+                    Math.floor(Math.random() * interjections.length)
+                  ]
+                } @${user.screen_name} misspelled ${
+                  keyword.correct
+                }: https://twitter.com/${user.screen_name}/status/${id_str}`
+              })
+            )
+          )
+            .then(() =>
+              // Record id of most recent tweet in db
+              ref.child("since_id").set(filtered[filtered.length - 1].id_str)
+            )
+            .catch(err => functions.logger.error(err))
       )
       .catch(err => functions.logger.error(err))
   );
