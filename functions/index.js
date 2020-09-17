@@ -7,7 +7,7 @@ admin.initializeApp();
 
 // Init Realtime Database
 const db = admin.database();
-const ref = db.ref("since_id");
+const ref = db.ref("/");
 
 // Init Twit
 const Twit = require("twit");
@@ -21,8 +21,7 @@ const T = new Twit({
 // General config
 const keyword = {
   correct: "Tucson",
-  incorrect: "Tuscon",
-  ignore: ["hyundai"]
+  incorrect: "Tuscon"
 };
 const query = "lang:en -filter:replies -filter:retweets filter:safe";
 const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"];
@@ -33,22 +32,27 @@ exports.scheduledFunction = functions.pubsub
     ref
       .once("value")
       .then(snapshot => snapshot.val())
-      .then(since_id => {
-        const { incorrect, ignore } = keyword;
-        return T.get("search/tweets", {
-          q: `${incorrect} ${ignore.map(i => `-${i}`).join(" ")} ${query}`,
+      .then(({ ignore, since_id }) =>
+        T.get("search/tweets", {
+          q: `${keyword.incorrect} ${ignore
+            .map(i => `-${i}`)
+            .join(" ")} ${query}`,
           result_type: "recent",
           since_id
-        });
-      })
+        })
+      )
       .then(({ data: { statuses } }) => {
-        statuses.length && functions.logger.info(statuses);
-        return statuses.filter(status =>
+        const filtered = statuses.filter(status =>
           status.text.toLowerCase().includes(keyword.incorrect.toLowerCase())
         );
+        filtered.length && functions.logger.info(filtered);
+        return filtered;
       })
-      .then(statuses =>
-        Promise.all([statuses, statuses.length && ref.set(statuses[0].id_str)])
+      .then(filtered =>
+        Promise.all([
+          statuses,
+          statuses.length && ref.child("since_id").set(statuses[0].id_str)
+        ])
       )
       .then(([statuses]) =>
         statuses.map(({ id_str, user }) =>
@@ -61,6 +65,5 @@ exports.scheduledFunction = functions.pubsub
           })
         )
       )
-      .then(statuses => statuses.length && functions.logger.info(statuses))
       .catch(err => functions.logger.error(err))
   );
