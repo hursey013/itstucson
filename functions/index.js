@@ -35,7 +35,7 @@ exports.scheduledFunction = functions.pubsub
         // Retrieve since_id and array of ignored keywords from db
         snapshot.val()
       )
-      .then(({ ignore, since_id }) =>
+      .then(({ ignore = [], since_id }) =>
         // Fetch recent tweets matching query after since_id
         T.get("search/tweets", {
           q: `${keyword.incorrect} ${ignore
