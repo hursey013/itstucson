@@ -23,7 +23,7 @@ const keyword = {
   correct: "Tucson",
   incorrect: "Tuscon"
 };
-const query = "lang:en -filter:replies -filter:retweets filter:safe";
+const query = "lang:en -filter:retweets filter:safe";
 const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"];
 
 exports.scheduledFunction = functions.pubsub
