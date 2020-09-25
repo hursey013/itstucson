@@ -48,8 +48,16 @@ exports.scheduledFunction = functions.pubsub
       .then(({ data: { statuses } }) =>
         // Filter tweets not containing keyword in status.text and reverse order
         statuses
-          .filter(status =>
-            status.text.toLowerCase().includes(keyword.incorrect.toLowerCase())
+          .filter(
+            status =>
+              status.text
+                .toLowerCase()
+                .includes(keyword.incorrect.toLowerCase()) &&
+              !status.entities.user_mentions.some(user =>
+                user.screen_name
+                  .toLowerCase()
+                  .includes(keyword.incorrect.toLowerCase())
+              )
           )
           .reverse()
       )
