@@ -42,24 +42,23 @@ exports.scheduledFunction = functions.pubsub
             .map(i => `-${i}`)
             .join(" ")} ${query}`,
           result_type: "recent",
+          tweet_mode: "extended",
           since_id
         })
       )
       .then(({ data: { statuses } }) =>
         // Filter tweets not containing keyword in status.text and reverse order
-        statuses
-          .filter(
-            status =>
-              status.text
+        statuses.filter(
+          status =>
+            status.full_text
+              .toLowerCase()
+              .includes(keyword.incorrect.toLowerCase()) &&
+            !status.entities.user_mentions.some(user =>
+              user.screen_name
                 .toLowerCase()
-                .includes(keyword.incorrect.toLowerCase()) &&
-              !status.entities.user_mentions.some(user =>
-                user.screen_name
-                  .toLowerCase()
-                  .includes(keyword.incorrect.toLowerCase())
-              )
-          )
-          .reverse()
+                .includes(keyword.incorrect.toLowerCase())
+            )
+        )
       )
       .then(
         filtered =>
@@ -80,7 +79,7 @@ exports.scheduledFunction = functions.pubsub
           )
             .then(() =>
               // Record id of most recent tweet in db
-              ref.child("since_id").set(filtered[filtered.length - 1].id_str)
+              ref.child("since_id").set(filtered[0].id_str)
             )
             .catch(err => functions.logger.error(err))
       )
