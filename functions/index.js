@@ -21,7 +21,8 @@ const T = new Twit({
 // General config
 const keyword = {
   correct: "Tucson",
-  incorrect: "Tuscon"
+  incorrect: "Tuscon",
+  case_sensitive: "TusCon"
 };
 const query = "lang:en -filter:retweets filter:safe";
 const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"];
@@ -53,6 +54,7 @@ exports.scheduledFunction = functions.pubsub
             status.full_text
               .toLowerCase()
               .includes(keyword.incorrect.toLowerCase()) &&
+            !status.full_text.includes(keyword.case_sensitive) &&
             !status.entities.user_mentions.some(user =>
               user.screen_name
                 .toLowerCase()
