@@ -26,6 +26,10 @@ const keyword = {
 };
 const query = "lang:en -filter:retweets filter:safe";
 const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"];
+const locations = ["az", "arizona", "phoenix", "tucson"];
+
+const isFromAz = location =>
+  locations.some(l => location.toLowerCase().includes(l.toLowerCase()));
 
 exports.scheduledFunction = functions.pubsub
   .schedule("every 15 minutes")
@@ -47,9 +51,12 @@ exports.scheduledFunction = functions.pubsub
           since_id
         })
       )
-      .then(({ data: { statuses } }) =>
+      .then(({ data }) => {
+        data.statuses.length > 0 &&
+          functions.logger.info(JSON.stringify(data, null, 2));
+
         // Filter tweets not containing keyword in status.text and reverse order
-        statuses.filter(
+        return data.statuses.filter(
           status =>
             status.full_text
               .toLowerCase()
@@ -60,8 +67,8 @@ exports.scheduledFunction = functions.pubsub
                 .toLowerCase()
                 .includes(keyword.incorrect.toLowerCase())
             )
-        )
-      )
+        );
+      })
       .then(
         filtered =>
           filtered.length &&
@@ -77,9 +84,11 @@ exports.scheduledFunction = functions.pubsub
                   user.name
                     ? `${user.name} (${user.screen_name})`
                     : user.screen_name
-                } misspelled ${keyword.correct}: https://twitter.com/${
-                  user.screen_name
-                }/status/${id_str}`
+                } misspelled ${keyword.correct}${
+                  isFromAz(user.location)
+                    ? `, and even worse, it looks like they live in ${user.location}!`
+                    : ":"
+                } https://twitter.com/${user.screen_name}/status/${id_str}`
               })
             )
           )
