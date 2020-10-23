@@ -73,7 +73,11 @@ exports.scheduledFunction = functions.pubsub
                   interjections[
                     Math.floor(Math.random() * interjections.length)
                   ]
-                } Someone misspelled ${keyword.correct}: https://twitter.com/${
+                } ${
+                  user.name
+                    ? `${user.name} (${user.screen_name})`
+                    : user.screen_name
+                } misspelled ${keyword.correct}: https://twitter.com/${
                   user.screen_name
                 }/status/${id_str}`
               })
