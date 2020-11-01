@@ -1,5 +1,8 @@
 "use strict";
 
+const { keyword, query, interjections, locations } = require("./config.js");
+const { createStatus, filterStatus, isFromAz } = require("./utils.js");
+
 // Init Firebase
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
@@ -17,19 +20,6 @@ const T = new Twit({
   access_token: functions.config().twitter.access_token,
   access_token_secret: functions.config().twitter.access_token_secret
 });
-
-// General config
-const keyword = {
-  correct: "Tucson",
-  incorrect: "Tuscon",
-  case_sensitive: "TusCon"
-};
-const query = "lang:en -filter:retweets filter:safe";
-const interjections = ["Oh no!", "Oops!", "Uh-oh!", "Yikes!"];
-const locations = ["az", "arizona", "phoenix", "tucson"];
-
-const isFromAz = location =>
-  locations.some(l => location.toLowerCase().includes(l.toLowerCase()));
 
 exports.scheduledFunction = functions.pubsub
   .schedule("every 15 minutes")
@@ -56,39 +46,16 @@ exports.scheduledFunction = functions.pubsub
           functions.logger.info(JSON.stringify(data, null, 2));
 
         // Filter tweets not containing keyword in status.text and reverse order
-        return data.statuses.filter(
-          status =>
-            status.full_text
-              .toLowerCase()
-              .includes(keyword.incorrect.toLowerCase()) &&
-            !status.full_text.includes(keyword.case_sensitive) &&
-            !status.entities.user_mentions.some(user =>
-              user.screen_name
-                .toLowerCase()
-                .includes(keyword.incorrect.toLowerCase())
-            )
-        );
+        return data.statuses.filter(filterStatus);
       })
       .then(
         filtered =>
           filtered.length &&
           Promise.all(
-            filtered.map(({ id_str, user }) =>
+            filtered.map(status =>
               // Post new tweet
               T.post("statuses/update", {
-                status: `${
-                  interjections[
-                    Math.floor(Math.random() * interjections.length)
-                  ]
-                } ${
-                  user.name
-                    ? `${user.name} (${user.screen_name})`
-                    : user.screen_name
-                } misspelled ${keyword.correct}${
-                  isFromAz(user.location)
-                    ? `, and even worse, it looks like they live in ${user.location}!`
-                    : ":"
-                } https://twitter.com/${user.screen_name}/status/${id_str}`
+                status: createStatus(status)
               })
             )
           )
