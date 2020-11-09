@@ -43,7 +43,7 @@ describe("index", () => {
         id_str: "12345"
       };
       expect(utils.createStatus(status)).toEqual(
-        "Oh no! Twitter User (twitterUser) misspelled Tucson, and even worse, it looks like they live in Tucson, AZ! https://twitter.com/twitterUser/status/12345"
+        "Oh no! Twitter User (twitterUser) misspelled Tucson, and even worse, it looks like they are in AZ! https://twitter.com/twitterUser/status/12345"
       );
     });
   });
