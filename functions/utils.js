@@ -5,9 +5,9 @@ const createStatus = ({ id_str, user }) =>
     user.name ? `${user.name} (${user.screen_name})` : user.screen_name
   } misspelled ${keyword.correct}${
     isFromAz(user.location)
-      ? `, and even worse, it looks like they are in AZ!`
-      : ":"
-  } https://twitter.com/${user.screen_name}/status/${id_str}`;
+      ? `, and even worse, it looks like they are from Arizona! 🤦`
+      : ""
+  } #itstucson https://twitter.com/${user.screen_name}/status/${id_str}`;
 
 const filterStatus = status =>
   status.full_text.toLowerCase().includes(keyword.incorrect.toLowerCase()) &&
