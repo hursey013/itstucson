@@ -13,7 +13,8 @@ describe("index", () => {
         },
 
         interjections: ["Oh no!"],
-        locations: ["az", "arizona", "phoenix", "tucson"]
+        locations: ["az", "arizona", "phoenix", "tucson"],
+        hyundaiKeywords: ["car", "dealership", "hyundai", "suv"]
       }));
     });
 
@@ -25,7 +26,8 @@ describe("index", () => {
           screen_name: "twitterUser",
           location: "The Moon"
         },
-        id_str: "12345"
+        id_str: "12345",
+        full_text: "Eegees is the best in Tuscon!"
       };
       expect(utils.createStatus(status)).toEqual(
         "Oh no! Twitter User (twitterUser) misspelled Tucson #itstucson https://twitter.com/twitterUser/status/12345"
@@ -40,10 +42,11 @@ describe("index", () => {
           screen_name: "twitterUser",
           location: "Tucson, AZ"
         },
-        id_str: "12345"
+        id_str: "12345",
+        full_text: "Eegees is the best in Tuscon!"
       };
       expect(utils.createStatus(status)).toEqual(
-        "Oh no! Twitter User (twitterUser) misspelled Tucson, and even worse, it looks like they are from Arizona! 🤦 #itstucson https://twitter.com/twitterUser/status/12345"
+        "Oh no! Twitter User (twitterUser) misspelled Tucson, and even worse, it looks like they are from Arizona! 🤦 #itstucson #hallofshame https://twitter.com/twitterUser/status/12345"
       );
     });
   });
@@ -87,6 +90,18 @@ describe("index", () => {
     it("returns false when not from AZ", () => {
       expect(utils.isFromAz("Kalamazoo, MI")).toEqual(false);
       expect(utils.isFromAz("HyundaiTucson")).toEqual(false);
+    });
+  });
+
+  describe("isHyundai function", () => {
+    it("returns true when status contains keyword", () => {
+      expect(utils.isHyundai("SUV")).toEqual(true);
+      expect(utils.isHyundai("car")).toEqual(true);
+      expect(utils.isHyundai("Hyundai")).toEqual(true);
+    });
+
+    it("returns false when status does not contain keyword", () => {
+      expect(utils.isHyundai("honda")).toEqual(false);
     });
   });
 });
