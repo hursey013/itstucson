@@ -49,6 +49,38 @@ describe("index", () => {
         "Oh no! Twitter User (twitterUser) misspelled Tucson, and even worse, it looks like they are from Arizona! 🤦 #itstucson #hallofshame https://twitter.com/twitterUser/status/12345"
       );
     });
+
+    it("adds extra message if there is a Hyundai keyword", () => {
+      const utils = require("./utils.js");
+      const status = {
+        user: {
+          name: "Twitter User",
+          screen_name: "twitterUser",
+          location: ""
+        },
+        id_str: "12345",
+        full_text: "I love my Hyundai Tuscon!"
+      };
+      expect(utils.createStatus(status)).toEqual(
+        "Oh no! Twitter User (twitterUser) misspelled Tucson. Also, did you know that the Hyundai SUV is named after Tucson, Arizona? #itstucson https://twitter.com/twitterUser/status/12345"
+      );
+    });
+
+    it("adds both extra messages", () => {
+      const utils = require("./utils.js");
+      const status = {
+        user: {
+          name: "Twitter User",
+          screen_name: "twitterUser",
+          location: "AZ"
+        },
+        id_str: "12345",
+        full_text: "I love my Hyundai Tuscon!"
+      };
+      expect(utils.createStatus(status)).toEqual(
+        "Oh no! Twitter User (twitterUser) misspelled Tucson, and even worse, it looks like they are from Arizona! 🤦 Also, did you know that the Hyundai SUV is named after Tucson, Arizona? #itstucson https://twitter.com/twitterUser/status/12345"
+      );
+    });
   });
 
   describe("filterStatus function", () => {

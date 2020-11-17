@@ -19,7 +19,9 @@ const createStatus = ({ full_text, id_str, user }) => {
         `, and even worse, it looks like they are from Arizona! 🤦`,
       hyundai:
         isHyundai(full_text) &&
-        ` Also, did you know that the Hyundai SUV is named after Tucson, Arizona?`,
+        `${
+          !isFromAz(user.location) ? "." : ""
+        } Also, did you know that the Hyundai SUV is named after Tucson, Arizona?`,
       hashtag: `#itstucson${formatHashTag(user)}`,
       link: `https://twitter.com/${user.screen_name}/status/${id_str}`
     }
@@ -31,6 +33,7 @@ const fillTemplate = (templateString, templateVariables) =>
 
 const filterStatus = status =>
   status.full_text.toLowerCase().includes(keyword.incorrect.toLowerCase()) &&
+  !status.full_text.toLowerCase().includes(keyword.correct.toLowerCase()) &&
   !status.full_text.includes(keyword.case_sensitive) &&
   !status.entities.user_mentions.some(user =>
     user.screen_name.toLowerCase().includes(keyword.incorrect.toLowerCase())
