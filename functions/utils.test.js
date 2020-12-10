@@ -128,7 +128,7 @@ describe("index", () => {
   describe("isHyundai function", () => {
     it("returns true when status contains keyword", () => {
       expect(utils.isHyundai("SUV")).toEqual(true);
-      expect(utils.isHyundai("car")).toEqual(true);
+      expect(utils.isHyundai("SUV,")).toEqual(true);
       expect(utils.isHyundai("Hyundai")).toEqual(true);
     });
 

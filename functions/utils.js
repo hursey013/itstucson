@@ -55,13 +55,12 @@ const formatHashTag = user => {
 
 const isFromAz = location =>
   location
-    .replace(", ", " ")
-    .split(" ")
+    .split(/[\s,?,.!]+/)
     .some(w => locations.some(l => w.toLowerCase() === l.toLowerCase()));
 
 const isHyundai = full_text =>
   full_text
-    .split(" ")
+    .split(/[\s,?,.!]+/)
     .some(w => hyundaiKeywords.some(h => w.toLowerCase() === h.toLowerCase()));
 
 module.exports = {
